@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func slope(trees []string, x int, y int) int {
+func slope(trees []string, x int, y int, c chan int) {
 	local := []int{0, 0}
 	count := 0
 	for {
@@ -21,13 +21,11 @@ func slope(trees []string, x int, y int) int {
 		if local[0] >= len(trees)-1 {
 			break
 		}
-		// Path
-		//fmt.Printf("Y: %d, X: %d\n", local[0], local[1])
 		if trees[local[0]][local[1]] == '#' {
 			count++
 		}
 	}
-	return count
+	c <- count
 }
 
 func main() {
@@ -40,7 +38,15 @@ func main() {
 	b, err := ioutil.ReadAll(file)
 	trees := strings.Split(string(b), "\n")
 
-	fmt.Printf("%d trees\n", slope(trees, 3, 1))
-	fmt.Printf("%d more trees\n", slope(trees, 1, 1)*slope(trees, 3, 1)*
-		slope(trees, 5, 1)*slope(trees, 7, 1)*slope(trees, 1, 2))
+	c := make(chan int)
+	go slope(trees, 3, 1, c)
+	fmt.Printf("%d trees\n", <-c)
+
+	go slope(trees, 1, 1, c)
+	go slope(trees, 3, 1, c)
+	go slope(trees, 5, 1, c)
+	go slope(trees, 7, 1, c)
+	go slope(trees, 1, 2, c)
+
+	fmt.Printf("%d more trees\n", <-c*<-c*<-c*<-c*<-c)
 }
